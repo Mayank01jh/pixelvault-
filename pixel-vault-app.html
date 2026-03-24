@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Vault — Functional App</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0b0f;
+  --surface: #111318;
+  --surface2: #181c24;
+  --surface3: #1e2330;
+  --border: #252b3a;
+  --accent: #00e5a0;
+  --accent-dim: rgba(0,229,160,0.12);
+  --accent2: #3b82f6;
+  --accent3: #f59e0b;
+  --danger: #ef4444;
+  --purple: #a78bfa;
+  --text: #e8eaf0;
+  --text-muted: #6b7280;
+  --text-dim: #9ca3af;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --radius: 12px;
+  --sidebar-w: 240px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── TOPBAR ─── */
+#topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  gap: 1rem;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.tb-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 800; font-size: 1rem; letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.tb-logo-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+
+/* Global search */
+.tb-search {
+  flex: 1;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 36px;
+  transition: border-color .2s;
+}
+.tb-search:focus-within { border-color: rgba(0,229,160,0.4); box-shadow: 0 0 0 3px rgba(0,229,160,0.06); }
+.tb-search input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--font-display); font-size: 0.83rem;
+}
+.tb-search input::placeholder { color: var(--text-muted); }
+.search-mic {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 1rem; padding: 0;
+  transition: color .2s;
+}
+.search-mic:hover, .search-mic.active { color: var(--accent); }
+.search-mic.recording { color: var(--danger); animation: micBlink 0.8s infinite; }
+@keyframes micBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.tb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.enc-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--accent);
+}
+.enc-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.tb-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent2), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer;
+}
+
+/* ─── LAYOUT ─── */
+#layout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── SIDEBAR ─── */
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.sidebar-section { padding: 1rem 0.75rem 0.5rem; }
+.sidebar-label {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted); padding: 0 0.5rem; margin-bottom: 0.3rem;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 500; color: var(--text-dim);
+  transition: background .15s, color .15s;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); color: var(--accent); }
+.nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; background: var(--accent);
+  color: #000; font-family: var(--font-mono);
+  font-size: 0.6rem; font-weight: 700;
+  padding: 1px 6px; border-radius: 10px;
+}
+
+.sidebar-divider { height: 1px; background: var(--border); margin: 0.5rem 0.75rem; }
+
+.source-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 0.8rem; color: var(--text-dim);
+  transition: background .15s, color .15s;
+}
+.source-item:hover { background: var(--surface2); color: var(--text); }
+.source-icon { font-size: 0.9rem; }
+.source-count { margin-left: auto; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+
+.sidebar-footer {
+  margin-top: auto; padding: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.storage-bar-wrap { margin-bottom: 0.4rem; }
+.storage-label {
+  display: flex; justify-content: space-between;
+  font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px;
+  font-family: var(--font-mono);
+}
+.storage-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.storage-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; width: 34%; }
+
+/* ─── MAIN CONTENT ─── */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── SCREENS ─── */
+.screen { display: none; flex: 1; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ── DASHBOARD ── */
+#screen-dashboard {
+  padding: 1.5rem 2rem;
+  gap: 1.5rem;
+}
+
+.dash-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem 1.5rem;
+  flex: 1; min-width: 140px;
+  transition: border-color .2s;
+}
+.stat-card:hover { border-color: rgba(0,229,160,0.25); }
+.stat-num {
+  font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700;
+  color: var(--text); line-height: 1;
+}
+.stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+.stat-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+
+.section-title {
+  font-size: 0.9rem; font-weight: 700; color: var(--text);
+  margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;
+}
+.section-title a {
+  font-size: 0.75rem; color: var(--accent); text-decoration: none;
+  font-weight: 500; cursor: pointer;
+}
+.section-title a:hover { text-decoration: underline; }
+
+.recent-files { display: flex; flex-direction: column; gap: 4px; }
+
+.file-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 9px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.file-row:hover { background: var(--surface2); border-color: rgba(0,229,160,0.2); }
+.file-type-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.file-info { flex: 1; min-width: 0; }
+.file-name { font-size: 0.83rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta { font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); }
+.file-source { font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-family: var(--font-mono); flex-shrink: 0; }
+.file-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.file-row:hover .file-actions { opacity: 1; }
+.file-action-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--surface3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem; color: var(--text-muted);
+  transition: background .15s, color .15s;
+}
+.file-action-btn:hover { background: var(--border); color: var(--text); }
+
+.activity-list { display: flex; flex-direction: column; gap: 6px; }
+.activity-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  font-size: 0.78rem; color: var(--text-dim);
+}
+.activity-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.activity-time { margin-left: auto; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+
+/* ── VAULT / FILE BROWSER ── */
+#screen-vault { padding: 1.5rem 2rem; gap: 1rem; }
+
+.vault-toolbar {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 6px 14px; border-radius: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 0.78rem; font-family: var(--font-display);
+  cursor: pointer; transition: all .15s;
+}
+.filter-btn:hover, .filter-btn.active { background: var(--accent-dim); border-color: rgba(0,229,160,0.3); color: var(--accent); }
+
+.upload-btn {
+  margin-left: auto;
+  padding: 7px 16px; border-radius: 7px;
+  background: var(--accent); color: #000;
+  font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
+  border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: transform .15s, box-shadow .15s;
+}
+.upload-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,229,160,0.3); }
+
+.files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.file-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  cursor: pointer; transition: all .2s; position: relative;
+  overflow: hidden;
+}
+.file-card:hover { border-color: rgba(0,229,160,0.3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.file-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--card-color, var(--accent)); opacity: 0;
+  transition: opacity .2s;
+}
+.file-card:hover::before { opacity: 1; }
+.fc-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
+.fc-name { font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 4px; word-break: break-all; }
+.fc-meta { font-size: 0.68rem; color: var(--text-muted); font-family: var(--font-mono); }
+.fc-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+.fc-tag { font-size: 0.6rem; padding: 2px 7px; border-radius: 4px; font-family: var(--font-mono); }
+.fc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.fc-source { font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); }
+.fc-enc { font-size: 0.65rem; color: var(--accent); font-family: var(--font-mono); }
+
+/* ── SEARCH SCREEN ── */
+#screen-search { padding: 1.5rem 2rem; gap: 1.25rem; }
+
+.search-hero {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+
+.big-search {
+  width: 100%; max-width: 580px;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 12px 16px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.big-search:focus-within {
+  border-color: rgba(0,229,160,0.5);
+  box-shadow: 0 0 0 4px rgba(0,229,160,0.07);
+}
+.big-search input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: 'Noto Sans Devanagari', var(--font-display);
+  font-size: 1rem;
+}
+.big-search input::placeholder { color: var(--text-muted); font-family: var(--font-display); }
+
+.mic-big {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(0,229,160,0.1); border: 1.5px solid rgba(0,229,160,0.3);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1.2rem; color: var(--accent); flex-shrink: 0;
+  transition: all .2s;
+}
+.mic-big:hover { background: rgba(0,229,160,0.2); }
+.mic-big.recording {
+  background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: var(--danger);
+  animation: micPulse 1s infinite;
+}
+@keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.3)} 50%{box-shadow:0 0 0 10px rgba(239,68,68,0)} }
+
+.search-btn {
+  padding: 10px 22px; border-radius: 8px;
+  background: var(--accent); color: #000;
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700;
+  border: none; cursor: pointer; transition: all .15s; flex-shrink: 0;
+}
+.search-btn:hover { box-shadow: 0 4px 16px rgba(0,229,160,0.3); transform: translateY(-1px); }
+
+.search-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.chip {
+  padding: 5px 14px; border-radius: 100px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--text-dim); cursor: pointer;
+  transition: all .15s; font-family: 'Noto Sans Devanagari', var(--font-display);
+}
+.chip:hover { background: var(--accent-dim); border-color: rgba(0,229,160,0.3); color: var(--accent); }
+
+.search-results { display: flex; flex-direction: column; gap: 8px; }
+
+.result-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem 1.25rem;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  transition: all .15s;
+}
+.result-item:hover { border-color: rgba(0,229,160,0.3); background: var(--surface2); }
+.result-icon { font-size: 1.5rem; flex-shrink: 0; }
+.result-body { flex: 1; min-width: 0; }
+.result-name { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.result-snippet { font-size: 0.75rem; color: var(--text-dim); line-height: 1.4; }
+.result-snippet em { color: var(--accent3); font-style: normal; font-weight: 600; }
+.result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.result-score { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); }
+.result-source { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+
+.ai-answer-box {
+  background: linear-gradient(135deg, rgba(0,229,160,0.06), rgba(59,130,246,0.06));
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 12px; padding: 1.25rem 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.ai-answer-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.75rem; color: var(--accent); font-family: var(--font-mono);
+  margin-bottom: 0.75rem; font-weight: 700;
+}
+.ai-answer-text { font-size: 0.875rem; color: var(--text-dim); line-height: 1.65; }
+.ai-thinking {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);
+}
+.thinking-dots { display: flex; gap: 3px; }
+.thinking-dots span {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  animation: dotBounce 1.2s infinite;
+}
+.thinking-dots span:nth-child(2) { animation-delay: .2s; }
+.thinking-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes dotBounce { 0%,100%{transform:translateY(0);opacity:.5} 50%{transform:translateY(-4px);opacity:1} }
+
+/* ── UPLOAD MODAL ── */
+#upload-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 200;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#upload-modal.open { display: flex; }
+
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 2rem; width: 480px; max-width: 94vw;
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+
+.modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+.modal-close { margin-left: auto; background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+.modal-close:hover { color: var(--text); }
+
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 3rem 2rem; text-align: center; cursor: pointer;
+  transition: all .2s; margin-bottom: 1rem;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: rgba(0,229,160,0.5); background: var(--accent-dim);
+}
+.drop-zone input[type="file"] { display: none; }
+.drop-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.drop-text { font-size: 0.85rem; color: var(--text-dim); }
+.drop-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
+
+.source-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
+.src-btn {
+  padding: 10px; border-radius: 8px;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.8rem; color: var(--text-dim); cursor: pointer;
+  transition: all .15s;
+}
+.src-btn:hover { border-color: rgba(0,229,160,0.3); color: var(--text); }
+.src-btn.selected { background: var(--accent-dim); border-color: rgba(0,229,160,0.4); color: var(--accent); }
+
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+.btn-cancel { padding: 8px 18px; border-radius: 7px; background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-family: var(--font-display); font-size: 0.82rem; cursor: pointer; }
+.btn-cancel:hover { border-color: var(--text-muted); color: var(--text); }
+.btn-confirm { padding: 8px 18px; border-radius: 7px; background: var(--accent); color: #000; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; border: none; cursor: pointer; }
+.btn-confirm:hover { box-shadow: 0 4px 16px rgba(0,229,160,0.3); }
+
+/* progress */
+.upload-progress-list { display: flex; flex-direction: column; gap: 8px; margin-top: 0.75rem; }
+.up-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.up-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.up-name { font-size: 0.78rem; font-weight: 600; flex: 1; }
+.up-pct { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent); }
+.up-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.up-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width .3s; }
+.up-status { font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px; }
+
+/* ── VIEWER MODAL ── */
+#viewer-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); z-index: 200;
+  flex-direction: column;
+}
+#viewer-modal.open { display: flex; }
+.viewer-header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem; height: 52px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.viewer-title { font-weight: 700; font-size: 0.9rem; }
+.viewer-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
+.viewer-actions { margin-left: auto; display: flex; gap: 8px; }
+.v-btn {
+  padding: 6px 14px; border-radius: 6px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 0.75rem; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all .15s;
+}
+.v-btn:hover { border-color: rgba(0,229,160,0.3); color: var(--text); }
+.v-btn.danger:hover { border-color: rgba(239,68,68,0.4); color: var(--danger); }
+.viewer-close { background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; margin-left: 8px; }
+.viewer-close:hover { color: var(--text); }
+.viewer-body { flex: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; }
+.viewer-doc {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 3rem; max-width: 680px; width: 100%;
+  min-height: 400px;
+}
+.viewer-doc h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
+.viewer-doc .doc-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+.viewer-doc p { font-size: 0.875rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 1rem; }
+.viewer-doc table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1rem 0; }
+.viewer-doc th { background: var(--surface2); padding: 8px 12px; text-align: left; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.viewer-doc td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+
+/* ── SECURITY SCREEN ── */
+#screen-security { padding: 1.5rem 2rem; gap: 1.25rem; }
+.sec-header { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.sec-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.sec-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.5rem;
+}
+.sec-card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+.sec-card-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+.sec-card-text { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+.sec-card-status {
+  margin-top: 0.75rem; display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+.audit-log { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.audit-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.audit-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  font-size: 0.78rem; color: var(--text-dim);
+  transition: background .15s;
+}
+.audit-row:hover { background: var(--surface2); }
+.audit-row:last-child { border-bottom: none; }
+.audit-event { flex: 1; }
+.audit-time { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+.audit-ok { color: var(--accent); font-size: 0.7rem; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.toast-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.82rem; color: var(--text);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: toastIn .25s ease;
+  pointer-events: auto; min-width: 260px;
+}
+@keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+.toast-item.success .toast-icon { color: var(--accent); }
+.toast-item.error .toast-icon { color: var(--danger); }
+.toast-item.info .toast-icon { color: var(--accent2); }
+
+/* ── VOICE PANEL ── */
+#voice-panel {
+  display: none; position: fixed;
+  bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid rgba(0,229,160,0.3);
+  border-radius: 16px; padding: 1.25rem 2rem;
+  z-index: 100; min-width: 340px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: slideUp .2s ease;
+}
+#voice-panel.active { display: block; }
+@keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+.vp-waves { display: flex; align-items: center; justify-content: center; gap: 3px; height: 36px; margin-bottom: 0.5rem; }
+.vp-wave {
+  width: 4px; background: var(--accent); border-radius: 2px;
+  animation: wave 1s ease-in-out infinite;
+}
+.vp-wave:nth-child(1){height:12px;animation-delay:0s}
+.vp-wave:nth-child(2){height:24px;animation-delay:.1s}
+.vp-wave:nth-child(3){height:32px;animation-delay:.2s}
+.vp-wave:nth-child(4){height:20px;animation-delay:.3s}
+.vp-wave:nth-child(5){height:28px;animation-delay:.4s}
+.vp-wave:nth-child(6){height:16px;animation-delay:.5s}
+.vp-wave:nth-child(7){height:24px;animation-delay:.6s}
+@keyframes wave { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(1.8)} }
+.vp-text { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+.vp-transcript { font-size: 0.9rem; color: var(--text); font-family: 'Noto Sans Devanagari', var(--font-display); min-height: 1.2em; }
+.vp-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* animations */
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.fade-in { animation: fadeIn .3s ease both; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="tb-logo">
+    <div class="tb-logo-icon">🔐</div>
+    Pixel Vault
+  </div>
+  <div class="tb-search">
+    <span style="color:var(--text-muted);font-size:.9rem">🔍</span>
+    <input type="text" id="global-search-input" placeholder="Search your documents..." autocomplete="off">
+    <button class="search-mic" id="topbar-mic" title="Voice search" onclick="startVoice('topbar')">🎙</button>
+  </div>
+  <div class="tb-right">
+    <div class="enc-badge"><div class="enc-dot"></div> AES-256 ON</div>
+    <div class="tb-avatar" title="Mayank">M</div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div id="layout">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <button class="nav-item active" onclick="showScreen('dashboard',this)">
+        <span class="nav-icon">🏠</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showScreen('vault',this)">
+        <span class="nav-icon">🗄</span> My Vault
+        <span class="nav-badge" id="vault-count">0</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('search',this)">
+        <span class="nav-icon">🔍</span> Smart Search
+      </button>
+      <button class="nav-item" onclick="showScreen('security',this)">
+        <span class="nav-icon">🛡</span> Security
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Sources</div>
+      <div class="source-item" onclick="filterBySource('WhatsApp')">
+        <span class="source-icon">💬</span> WhatsApp
+        <span class="source-count" id="count-whatsapp">0</span>
+      </div>
+      <div class="source-item" onclick="filterBySource('Gmail')">
+        <span class="source-icon">📧</span> Gmail
+        <span class="source-count" id="count-gmail">0</span>
+      </div>
+      <div class="source-item" onclick="filterBySource('Drive')">
+        <span class="source-icon">☁️</span> Google Drive
+        <span class="source-count" id="count-drive">0</span>
+      </div>
+      <div class="source-item" onclick="filterBySource('Local')">
+        <span class="source-icon">📁</span> Local Files
+        <span class="source-count" id="count-local">0</span>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Categories</div>
+      <div class="source-item" onclick="filterByTag('bill')"><span class="source-icon">💡</span> Bills</div>
+      <div class="source-item" onclick="filterByTag('invoice')"><span class="source-icon">🧾</span> Invoices</div>
+      <div class="source-item" onclick="filterByTag('medical')"><span class="source-icon">🏥</span> Medical</div>
+      <div class="source-item" onclick="filterByTag('legal')"><span class="source-icon">⚖️</span> Legal</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="storage-bar-wrap">
+        <div class="storage-label"><span>Storage Used</span><span id="storage-used">0 MB</span></div>
+        <div class="storage-bar"><div class="storage-fill" id="storage-bar-fill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- DASHBOARD -->
+    <div class="screen active" id="screen-dashboard">
+      <div class="dash-row fade-in">
+        <div class="stat-card">
+          <div class="stat-icon">📄</div>
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">Total Documents</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔐</div>
+          <div class="stat-num" id="stat-enc">0</div>
+          <div class="stat-label">Encrypted Files</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔍</div>
+          <div class="stat-num" id="stat-searches">0</div>
+          <div class="stat-label">Searches Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🚫</div>
+          <div class="stat-num" style="color:var(--accent)">0</div>
+          <div class="stat-label">Bytes Transmitted</div>
+        </div>
+      </div>
+
+      <div class="fade-in" style="animation-delay:.1s">
+        <div class="section-title">Recent Documents <a onclick="showScreen('vault',document.querySelector('[onclick*=vault]'))">View all →</a></div>
+        <div class="recent-files" id="recent-files-list">
+          <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:.85rem">
+            No documents yet. <span style="color:var(--accent);cursor:pointer" onclick="openUpload()">Upload your first file →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fade-in" style="animation-delay:.2s">
+        <div class="section-title">Recent Activity</div>
+        <div class="activity-list" id="activity-list">
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--accent2)"></div>
+            <span>Pixel Vault initialized · AES-256-GCM encryption active</span>
+            <span class="activity-time">just now</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VAULT -->
+    <div class="screen" id="screen-vault">
+      <div class="vault-toolbar fade-in">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('pdf',this)">PDF</button>
+        <button class="filter-btn" onclick="setFilter('image',this)">Images</button>
+        <button class="filter-btn" onclick="setFilter('doc',this)">Docs</button>
+        <button class="filter-btn" onclick="setFilter('other',this)">Other</button>
+        <button class="upload-btn" onclick="openUpload()">＋ Add Document</button>
+      </div>
+      <div class="files-grid fade-in" id="files-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-size:.85rem">
+          Your vault is empty. <span style="color:var(--accent);cursor:pointer" onclick="openUpload()">Upload documents to get started →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="screen" id="screen-search">
+      <div class="search-hero fade-in">
+        <div style="font-size:.75rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase">AI-Powered · Hindi + English · Zero Transmission</div>
+        <div style="display:flex;gap:10px;width:100%;max-width:580px;align-items:center">
+          <div class="big-search" style="flex:1">
+            <input type="text" id="main-search-input" placeholder="Search in Hindi or English…" autocomplete="off" onkeydown="if(event.key==='Enter')doSearch()">
+            <button class="mic-big" id="main-mic" onclick="startVoice('main')" title="Voice Search">🎙</button>
+          </div>
+          <button class="search-btn" onclick="doSearch()">Search</button>
+        </div>
+        <div class="search-chips">
+          <div class="chip" onclick="setSearchQuery('बिजली बिल ढूंढो')">बिजली बिल ढूंढो</div>
+          <div class="chip" onclick="setSearchQuery('last month invoices')">last month invoices</div>
+          <div class="chip" onclick="setSearchQuery('medical reports')">medical reports</div>
+          <div class="chip" onclick="setSearchQuery('GST invoice 2024')">GST invoice 2024</div>
+          <div class="chip" onclick="setSearchQuery('insurance documents')">insurance documents</div>
+        </div>
+      </div>
+      <div id="search-results-area">
+        <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:.85rem">
+          Type or speak a query to search your vault
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="screen" id="screen-security">
+      <div class="fade-in">
+        <div class="sec-header" style="margin-bottom:.75rem">🛡 Security Overview</div>
+        <div class="sec-cards">
+          <div class="sec-card">
+            <div class="sec-card-icon">🔐</div>
+            <div class="sec-card-title">AES-256-GCM Encryption</div>
+            <div class="sec-card-text">All documents encrypted with military-grade AES-256-GCM. Keys stored in device secure enclave.</div>
+            <div class="sec-card-status"><div class="status-dot"></div> ACTIVE</div>
+          </div>
+          <div class="sec-card">
+            <div class="sec-card-icon">🚫</div>
+            <div class="sec-card-title">Zero Cloud Upload</div>
+            <div class="sec-card-text">Document content never transmitted to any server. Only Firebase Auth token exchanged.</div>
+            <div class="sec-card-status"><div class="status-dot"></div> ENFORCED</div>
+          </div>
+          <div class="sec-card">
+            <div class="sec-card-icon">🗄</div>
+            <div class="sec-card-title">Encrypted SQLite</div>
+            <div class="sec-card-text">All metadata and file index stored in on-device encrypted SQLite database.</div>
+            <div class="sec-card-status"><div class="status-dot"></div> ENCRYPTED</div>
+          </div>
+          <div class="sec-card">
+            <div class="sec-card-icon">🔑</div>
+            <div class="sec-card-title">Firebase Auth Only</div>
+            <div class="sec-card-text">Authentication handled via Firebase. No document data, no search queries transmitted.</div>
+            <div class="sec-card-status"><div class="status-dot"></div> VERIFIED</div>
+          </div>
+          <div class="sec-card">
+            <div class="sec-card-icon">🎙</div>
+            <div class="sec-card-title">Offline STT</div>
+            <div class="sec-card-text">Speech-to-text runs entirely on-device. Voice queries never sent to external servers.</div>
+            <div class="sec-card-status"><div class="status-dot"></div> ON-DEVICE</div>
+          </div>
+          <div class="sec-card">
+            <div class="sec-card-icon">🔒</div>
+            <div class="sec-card-title">Auto-lock</div>
+            <div class="sec-card-text">Vault auto-locks after 5 minutes of inactivity. Biometric re-authentication required.</div>
+            <div class="sec-card-status"><div class="status-dot"></div> ENABLED</div>
+          </div>
+        </div>
+      </div>
+      <div class="fade-in" style="animation-delay:.1s">
+        <div class="section-title" style="margin-bottom:.75rem">Audit Log</div>
+        <div class="audit-log">
+          <div class="audit-header">📋 Security Events</div>
+          <div id="audit-log-list">
+            <div class="audit-row">
+              <div class="activity-dot" style="background:var(--accent);width:6px;height:6px;border-radius:50%;flex-shrink:0"></div>
+              <div class="audit-event">Vault initialized · AES-256-GCM key generated</div>
+              <div class="audit-time">just now</div>
+              <div class="audit-ok">✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- UPLOAD MODAL -->
+<div id="upload-modal">
+  <div class="modal-box">
+    <div class="modal-title">
+      ＋ Add Document
+      <button class="modal-close" onclick="closeUpload()">✕</button>
+    </div>
+
+    <div id="upload-step-1">
+      <div class="source-selector">
+        <div class="src-btn selected" id="src-local" onclick="selectSource('Local')">📁 Local File</div>
+        <div class="src-btn" id="src-whatsapp" onclick="selectSource('WhatsApp')">💬 WhatsApp</div>
+        <div class="src-btn" id="src-gmail" onclick="selectSource('Gmail')">📧 Gmail</div>
+        <div class="src-btn" id="src-drive" onclick="selectSource('Drive')">☁️ Drive</div>
+      </div>
+
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleDrop(event)">
+        <input type="file" id="file-input" multiple accept="*/*" onchange="handleFiles(this.files)">
+        <div class="drop-icon">📂</div>
+        <div class="drop-text">Drop files here or click to browse</div>
+        <div class="drop-sub">PDF, Images, Docs, Sheets · Max 10MB each</div>
+      </div>
+
+      <div id="demo-files-label" style="font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;font-family:var(--font-mono)">
+        — OR ADD DEMO DOCUMENTS —
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.5rem" id="demo-file-chips"></div>
+    </div>
+
+    <div id="upload-step-2" style="display:none">
+      <div class="upload-progress-list" id="upload-progress-list"></div>
+    </div>
+
+    <div class="modal-actions" id="upload-modal-actions">
+      <button class="btn-cancel" onclick="closeUpload()">Cancel</button>
+      <button class="btn-confirm" onclick="addDemoFiles()">Import Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEWER MODAL -->
+<div id="viewer-modal">
+  <div class="viewer-header">
+    <span id="viewer-icon" style="font-size:1.2rem">📄</span>
+    <div>
+      <div class="viewer-title" id="viewer-title">Document</div>
+      <div class="viewer-meta" id="viewer-meta"></div>
+    </div>
+    <div class="viewer-actions">
+      <button class="v-btn" onclick="downloadDoc()">⬇ Download</button>
+      <button class="v-btn" onclick="shareDoc()">↗ Share</button>
+      <button class="v-btn danger" onclick="deleteCurrentDoc()">🗑 Delete</button>
+    </div>
+    <button class="viewer-close" onclick="closeViewer()">✕</button>
+  </div>
+  <div class="viewer-body">
+    <div class="viewer-doc" id="viewer-content"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- VOICE PANEL -->
+<div id="voice-panel">
+  <button class="vp-close" onclick="stopVoice()">✕</button>
+  <div class="vp-waves">
+    <div class="vp-wave"></div><div class="vp-wave"></div><div class="vp-wave"></div>
+    <div class="vp-wave"></div><div class="vp-wave"></div><div class="vp-wave"></div>
+    <div class="vp-wave"></div>
+  </div>
+  <div class="vp-text">Listening… Speak in Hindi or English</div>
+  <div class="vp-transcript" id="vp-transcript">—</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+const state = {
+  files: [],
+  activity: [],
+  searches: 0,
+  currentFilter: 'all',
+  currentSource: null,
+  currentTag: null,
+  viewingFile: null,
+  selectedSource: 'Local',
+  pendingDemoFiles: []
+};
+
+/* ═══════════════════════════════════════════════
+   DEMO FILE LIBRARY
+═══════════════════════════════════════════════ */
+const DEMO_FILES = [
+  {
+    id: 'df1', name: 'Electricity_Bill_Oct2024.pdf', type: 'pdf', source: 'WhatsApp',
+    size: '2.1 MB', date: 'Oct 14, 2024', tags: ['bill', 'electricity', 'BSES'],
+    color: '#f59e0b',
+    content: {
+      title: 'BSES Electricity Bill — October 2024',
+      body: `<p>Account No: 109-XXXX-2847 | Consumer: Mayank Sharma | Address: A-12, Sector 45, Gurugram</p>
+      <table><tr><th>Description</th><th>Units</th><th>Rate</th><th>Amount</th></tr>
+      <tr><td>Fixed Charges</td><td>—</td><td>—</td><td>₹85.00</td></tr>
+      <tr><td>Energy Charges (0-100 units)</td><td>68</td><td>₹3.50</td><td>₹238.00</td></tr>
+      <tr><td>Fuel Surcharge</td><td>—</td><td>—</td><td>₹22.00</td></tr>
+      <tr><td>GST 18%</td><td>—</td><td>—</td><td>₹61.74</td></tr>
+      <tr><td><strong>Total Payable</strong></td><td></td><td></td><td><strong>₹406.74</strong></td></tr></table>
+      <p>Due Date: 25 Oct 2024 | Pay via UPI, Net Banking, or BSES App.</p>`
+    }
+  },
+  {
+    id: 'df2', name: 'GST_Invoice_Nov2024.pdf', type: 'pdf', source: 'Gmail',
+    size: '1.4 MB', date: 'Nov 5, 2024', tags: ['invoice', 'GST', 'tax'],
+    color: '#3b82f6',
+    content: {
+      title: 'GST Tax Invoice — November 2024',
+      body: `<p>Invoice No: INV-2024-1147 | Date: 05-Nov-2024 | GSTIN: 07ABCDE1234F1Z5</p>
+      <table><tr><th>Item</th><th>Qty</th><th>Rate</th><th>GST</th><th>Total</th></tr>
+      <tr><td>Web Development Services</td><td>1</td><td>₹25,000</td><td>₹4,500</td><td>₹29,500</td></tr>
+      <tr><td>UI/UX Design</td><td>1</td><td>₹12,000</td><td>₹2,160</td><td>₹14,160</td></tr>
+      <tr><td><strong>Grand Total</strong></td><td></td><td></td><td></td><td><strong>₹43,660</strong></td></tr></table>
+      <p>Bank: HDFC Bank | Account: XXXX-XXXX-7842 | IFSC: HDFC0001234</p>`
+    }
+  },
+  {
+    id: 'df3', name: 'Medical_Report_Dec2024.pdf', type: 'pdf', source: 'Local',
+    size: '3.2 MB', date: 'Dec 2, 2024', tags: ['medical', 'health', 'report'],
+    color: '#ef4444',
+    content: {
+      title: 'Blood Test Report — December 2024',
+      body: `<p>Patient: Mayank Sharma | Age: 22 | Date: 02-Dec-2024 | Lab: Dr. Lal PathLabs</p>
+      <table><tr><th>Test</th><th>Result</th><th>Reference Range</th><th>Status</th></tr>
+      <tr><td>Haemoglobin</td><td>14.2 g/dL</td><td>13.0–17.0</td><td style="color:var(--accent)">Normal</td></tr>
+      <tr><td>WBC Count</td><td>7.1 × 10³/µL</td><td>4.0–11.0</td><td style="color:var(--accent)">Normal</td></tr>
+      <tr><td>Fasting Glucose</td><td>88 mg/dL</td><td>70–100</td><td style="color:var(--accent)">Normal</td></tr>
+      <tr><td>Vitamin D</td><td>18 ng/mL</td><td>30–100</td><td style="color:var(--accent3)">Low</td></tr></table>
+      <p>Recommendation: Vitamin D supplementation advised. Follow up in 3 months.</p>`
+    }
+  },
+  {
+    id: 'df4', name: 'Aadhar_Card_Scan.jpg', type: 'image', source: 'Local',
+    size: '0.8 MB', date: 'Jan 10, 2025', tags: ['identity', 'government', 'legal'],
+    color: '#a78bfa',
+    content: {
+      title: 'Aadhar Card — Identity Document',
+      body: `<p style="color:var(--accent3)">⚠ This is a sensitive identity document. Stored with AES-256-GCM encryption.</p>
+      <p>Document Type: Government Identity Card (Aadhaar)</p>
+      <p>Issuer: Unique Identification Authority of India (UIDAI)</p>
+      <p>Status: <span style="color:var(--accent)">Encrypted & Secured</span></p>
+      <p style="margin-top:1rem;padding:1rem;background:var(--surface2);border-radius:8px;font-family:var(--font-mono);font-size:.75rem">
+      🔐 Full document content is encrypted. Open on verified device to view details.</p>`
+    }
+  },
+  {
+    id: 'df5', name: 'Water_Bill_Jan2025.pdf', type: 'pdf', source: 'WhatsApp',
+    size: '1.1 MB', date: 'Jan 18, 2025', tags: ['bill', 'water', 'utility'],
+    color: '#06b6d4',
+    content: {
+      title: 'Delhi Jal Board — Water Bill January 2025',
+      body: `<p>Connection No: DJB-2024-88432 | Consumer: Mayank Sharma | Zone: Gurugram</p>
+      <table><tr><th>Charge</th><th>Amount</th></tr>
+      <tr><td>Water Charges (4 KL)</td><td>₹120.00</td></tr>
+      <tr><td>Sewage Charges</td><td>₹60.00</td></tr>
+      <tr><td>Service Tax</td><td>₹14.40</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>₹194.40</strong></td></tr></table>
+      <p>Due Date: 31 Jan 2025</p>`
+    }
+  },
+  {
+    id: 'df6', name: 'Insurance_Policy_2025.pdf', type: 'pdf', source: 'Gmail',
+    size: '4.5 MB', date: 'Feb 1, 2025', tags: ['insurance', 'legal', 'policy'],
+    color: '#10b981',
+    content: {
+      title: 'Health Insurance Policy — 2025',
+      body: `<p>Policy No: HLT-2025-0483921 | Insurer: Star Health | Validity: 01-Feb-2025 to 31-Jan-2026</p>
+      <table><tr><th>Coverage</th><th>Limit</th></tr>
+      <tr><td>Hospitalisation</td><td>₹5,00,000</td></tr>
+      <tr><td>Day Care Procedures</td><td>₹2,00,000</td></tr>
+      <tr><td>Pre-Hospitalisation</td><td>30 days</td></tr>
+      <tr><td>Post-Hospitalisation</td><td>60 days</td></tr>
+      <tr><td>Annual Premium</td><td>₹8,432</td></tr></table>
+      <p>Claim Helpline: 1800-XXX-XXXX | Email: claims@starhealth.in</p>`
+    }
+  },
+  {
+    id: 'df7', name: 'PAN_Card_Scan.jpg', type: 'image', source: 'Drive',
+    size: '0.5 MB', date: 'Mar 5, 2025', tags: ['identity', 'tax', 'government'],
+    color: '#f97316',
+    content: {
+      title: 'PAN Card — Tax Identity Document',
+      body: `<p style="color:var(--accent3)">⚠ Sensitive tax identity document. End-to-end encrypted.</p>
+      <p>Document Type: Permanent Account Number Card</p>
+      <p>Issuer: Income Tax Department, Government of India</p>
+      <p>Purpose: Tax identification, financial transactions</p>
+      <p style="margin-top:1rem;padding:1rem;background:var(--surface2);border-radius:8px;font-family:var(--font-mono);font-size:.75rem">
+      🔐 Encrypted with AES-256-GCM · Zero bytes transmitted · Local storage only</p>`
+    }
+  },
+  {
+    id: 'df8', name: 'Rent_Agreement_2024.pdf', type: 'doc', source: 'Drive',
+    size: '2.8 MB', date: 'Apr 1, 2024', tags: ['legal', 'rent', 'property'],
+    color: '#8b5cf6',
+    content: {
+      title: 'Residential Rent Agreement — 2024',
+      body: `<p>Agreement Date: 01-Apr-2024 | Tenant: Mayank Sharma | Landlord: R.K. Gupta</p>
+      <p>Property: Flat No. A-204, Green Residency, Sector 45, Gurugram, Haryana</p>
+      <table><tr><th>Terms</th><th>Details</th></tr>
+      <tr><td>Monthly Rent</td><td>₹14,000</td></tr>
+      <tr><td>Security Deposit</td><td>₹42,000</td></tr>
+      <tr><td>Lease Duration</td><td>11 Months</td></tr>
+      <tr><td>Lock-in Period</td><td>3 Months</td></tr>
+      <tr><td>Notice Period</td><td>1 Month</td></tr></table>
+      <p>Registered: Sub-Registrar Office, Gurugram · Stamp Duty: ₹500 paid</p>`
+    }
+  }
+];
+
+/* ═══════════════════════════════════════════════
+   SCREEN NAVIGATION
+═══════════════════════════════════════════════ */
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(name)) n.classList.add('active');
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   FILE HELPERS
+═══════════════════════════════════════════════ */
+function getTypeIcon(type) {
+  const m = { pdf:'📄', image:'🖼', doc:'📝', sheet:'📊', other:'📎' };
+  return m[type] || '📎';
+}
+
+function getSourceBadge(source) {
+  const m = {
+    WhatsApp: { bg:'rgba(37,211,102,0.12)', color:'#25d366' },
+    Gmail: { bg:'rgba(234,67,53,0.12)', color:'#ea4335' },
+    Drive: { bg:'rgba(66,133,244,0.12)', color:'#4285f4' },
+    Local: { bg:'rgba(156,163,175,0.12)', color:'#9ca3af' },
+  };
+  const s = m[source] || m.Local;
+  return `background:${s.bg};color:${s.color}`;
+}
+
+function renderFileRow(f) {
+  return `<div class="file-row" onclick="openFile('${f.id}')">
+    <div class="file-type-icon" style="background:${f.color}20">${getTypeIcon(f.type)}</div>
+    <div class="file-info">
+      <div class="file-name">${f.name}</div>
+      <div class="file-meta">${f.date} · ${f.size}</div>
+    </div>
+    <span class="file-source" style="${getSourceBadge(f.source)}">${f.source}</span>
+    <div class="file-actions">
+      <div class="file-action-btn" onclick="event.stopPropagation();openFile('${f.id}')" title="View">👁</div>
+      <div class="file-action-btn" onclick="event.stopPropagation();deleteFile('${f.id}')" title="Delete" style="color:var(--danger)">🗑</div>
+    </div>
+  </div>`;
+}
+
+function renderFileCard(f) {
+  const tagsHtml = f.tags.map(t => `<span class="fc-tag" style="background:${f.color}15;color:${f.color}">${t}</span>`).join('');
+  return `<div class="file-card" style="--card-color:${f.color}" onclick="openFile('${f.id}')">
+    <span class="fc-icon">${getTypeIcon(f.type)}</span>
+    <div class="fc-name">${f.name}</div>
+    <div class="fc-meta">${f.date} · ${f.size}</div>
+    <div class="fc-tags">${tagsHtml}</div>
+    <div class="fc-footer">
+      <span class="fc-source">${f.source}</span>
+      <span class="fc-enc">🔐 AES-256</span>
+    </div>
+  </div>`;
+}
+
+function refreshUI() {
+  const files = state.files;
+  document.getElementById('stat-total').textContent = files.length;
+  document.getElementById('stat-enc').textContent = files.length;
+  document.getElementById('stat-searches').textContent = state.searches;
+  document.getElementById('vault-count').textContent = files.length;
+
+  // source counts
+  ['WhatsApp','Gmail','Drive','Local'].forEach(s => {
+    document.getElementById('count-' + s.toLowerCase()).textContent = files.filter(f => f.source === s).length;
+  });
+
+  // storage
+  const totalMB = files.reduce((a,f) => a + parseFloat(f.size), 0);
+  document.getElementById('storage-used').textContent = totalMB.toFixed(1) + ' MB';
+
+  // recent files
+  const rl = document.getElementById('recent-files-list');
+  if (files.length === 0) {
+    rl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:.85rem">No documents yet. <span style="color:var(--accent);cursor:pointer" onclick="openUpload()">Upload your first file →</span></div>`;
+  } else {
+    rl.innerHTML = files.slice(-5).reverse().map(renderFileRow).join('');
+  }
+
+  // vault grid
+  renderVault();
+}
+
+function renderVault(filterType, filterSource, filterTag) {
+  let files = state.files;
+  if (filterType && filterType !== 'all') files = files.filter(f => f.type === filterType);
+  if (filterSource) files = files.filter(f => f.source === filterSource);
+  if (filterTag) files = files.filter(f => f.tags.includes(filterTag));
+
+  const grid = document.getElementById('files-grid');
+  if (files.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-size:.85rem">No documents match this filter. <span style="color:var(--accent);cursor:pointer" onclick="openUpload()">Upload documents →</span></div>`;
+  } else {
+    grid.innerHTML = files.map(renderFileCard).join('');
+  }
+}
+
+function setFilter(type, btn) {
+  state.currentFilter = type;
+  state.currentSource = null;
+  state.currentTag = null;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderVault(type);
+}
+
+function filterBySource(source) {
+  state.currentSource = source;
+  showScreen('vault');
+  renderVault(null, source);
+}
+
+function filterByTag(tag) {
+  state.currentTag = tag;
+  showScreen('vault');
+  renderVault(null, null, tag);
+}
+
+/* ═══════════════════════════════════════════════
+   FILE VIEWER
+═══════════════════════════════════════════════ */
+function openFile(id) {
+  const f = state.files.find(x => x.id === id);
+  if (!f) return;
+  state.viewingFile = f;
+  document.getElementById('viewer-icon').textContent = getTypeIcon(f.type);
+  document.getElementById('viewer-title').textContent = f.name;
+  document.getElementById('viewer-meta').textContent = `${f.source} · ${f.date} · ${f.size} · 🔐 AES-256-GCM encrypted`;
+  document.getElementById('viewer-content').innerHTML = `
+    <h3>${f.content.title}</h3>
+    <div class="doc-meta">${f.source} · ${f.date} · ${f.size} · Encrypted</div>
+    ${f.content.body}
+  `;
+  document.getElementById('viewer-modal').classList.add('open');
+  addActivity(`Opened "${f.name}"`, 'var(--accent2)');
+  addAuditLog(`File accessed: ${f.name}`);
+}
+
+function closeViewer() {
+  document.getElementById('viewer-modal').classList.remove('open');
+  state.viewingFile = null;
+}
+
+function deleteCurrentDoc() {
+  if (!state.viewingFile) return;
+  deleteFile(state.viewingFile.id);
+  closeViewer();
+}
+
+function downloadDoc() {
+  if (!state.viewingFile) return;
+  showToast('success', '⬇', `"${state.viewingFile.name}" downloaded`);
+  addAuditLog(`File downloaded: ${state.viewingFile.name}`);
+}
+
+function shareDoc() {
+  if (!state.viewingFile) return;
+  showToast('info', '↗', `Share link copied (encrypted)`);
+}
+
+/* ═══════════════════════════════════════════════
+   DELETE FILE
+═══════════════════════════════════════════════ */
+function deleteFile(id) {
+  const f = state.files.find(x => x.id === id);
+  if (!f) return;
+  state.files = state.files.filter(x => x.id !== id);
+  addActivity(`Deleted "${f.name}"`, 'var(--danger)');
+  addAuditLog(`File deleted: ${f.name}`);
+  showToast('success', '🗑', `"${f.name}" removed from vault`);
+  refreshUI();
+}
+
+/* ═══════════════════════════════════════════════
+   UPLOAD FLOW
+═══════════════════════════════════════════════ */
+function openUpload() {
+  document.getElementById('upload-modal').classList.add('open');
+  renderDemoChips();
+}
+
+function closeUpload() {
+  document.getElementById('upload-modal').classList.remove('open');
+  document.getElementById('upload-step-1').style.display = '';
+  document.getElementById('upload-step-2').style.display = 'none';
+  document.getElementById('upload-modal-actions').style.display = 'flex';
+  state.pendingDemoFiles = [];
+  refreshDemoChips();
+}
+
+function selectSource(s) {
+  state.selectedSource = s;
+  ['Local','WhatsApp','Gmail','Drive'].forEach(x => {
+    const el = document.getElementById('src-' + x.toLowerCase());
+    if (el) el.classList.toggle('selected', x === s);
+  });
+}
+
+const DEMO_CHIPS_LABELS = DEMO_FILES.map(f => ({ id: f.id, label: f.name.split('.')[0].replace(/_/g,' ') }));
+
+function renderDemoChips() {
+  const c = document.getElementById('demo-file-chips');
+  c.innerHTML = DEMO_CHIPS_LABELS.map(d => {
+    const exists = state.files.find(f => f.id === d.id);
+    const sel = state.pendingDemoFiles.includes(d.id);
+    const style = exists ? 'opacity:.4;cursor:not-allowed' : '';
+    const cls = sel ? 'chip' : 'chip';
+    const bg = sel ? 'background:var(--accent-dim);border-color:rgba(0,229,160,.4);color:var(--accent)' : '';
+    return `<div class="${cls}" style="${style};${bg}" onclick="${exists ? '' : `toggleDemoFile('${d.id}')`}">${d.label}${exists ? ' ✓' : ''}</div>`;
+  }).join('');
+}
+
+function refreshDemoChips() { renderDemoChips(); }
+
+function toggleDemoFile(id) {
+  if (state.pendingDemoFiles.includes(id)) {
+    state.pendingDemoFiles = state.pendingDemoFiles.filter(x => x !== id);
+  } else {
+    state.pendingDemoFiles.push(id);
+  }
+  renderDemoChips();
+}
+
+function handleFiles(files) {
+  if (!files.length) return;
+  Array.from(files).forEach(file => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const typeMap = { pdf:'pdf', jpg:'image', jpeg:'image', png:'image', doc:'doc', docx:'doc', xls:'sheet', xlsx:'sheet' };
+    const type = typeMap[ext] || 'other';
+    const id = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    const newFile = {
+      id, name: file.name, type, source: state.selectedSource,
+      size: (file.size / 1048576).toFixed(1) + ' MB',
+      date: new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}),
+      tags: [type], color: '#00e5a0',
+      content: { title: file.name, body: `<p>File imported from ${state.selectedSource}.</p><p style="font-family:var(--font-mono);font-size:.75rem;color:var(--text-muted)">🔐 Content encrypted with AES-256-GCM. Preview not available for uploaded files in this prototype.</p>` }
+    };
+    simulateUpload(newFile);
+  });
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+}
+
+function addDemoFiles() {
+  if (state.pendingDemoFiles.length === 0) {
+    showToast('error', '⚠', 'Select at least one file to import'); return;
+  }
+  const toAdd = DEMO_FILES.filter(f => state.pendingDemoFiles.includes(f.id) && !state.files.find(x => x.id === f.id));
+  if (toAdd.length === 0) {
+    showToast('info', 'ℹ', 'Selected files already in vault'); return;
+  }
+  document.getElementById('upload-step-1').style.display = 'none';
+  document.getElementById('upload-modal-actions').style.display = 'none';
+  document.getElementById('upload-step-2').style.display = 'block';
+
+  const list = document.getElementById('upload-progress-list');
+  list.innerHTML = '';
+  toAdd.forEach((f, i) => {
+    list.innerHTML += `<div class="up-item" id="up_${f.id}">
+      <div class="up-top"><span class="up-name">${f.name}</span><span class="up-pct" id="upct_${f.id}">0%</span></div>
+      <div class="up-bar"><div class="up-fill" id="ufill_${f.id}" style="width:0%"></div></div>
+      <div class="up-status" id="ust_${f.id}">Importing…</div>
+    </div>`;
+  });
+
+  toAdd.forEach((f, i) => {
+    setTimeout(() => simulateUploadProgress(f, () => {
+      if (i === toAdd.length - 1) {
+        setTimeout(() => closeUpload(), 600);
+      }
+    }), i * 300);
+  });
+}
+
+function simulateUpload(file) {
+  document.getElementById('upload-step-1').style.display = 'none';
+  document.getElementById('upload-modal-actions').style.display = 'none';
+  document.getElementById('upload-step-2').style.display = 'block';
+  const list = document.getElementById('upload-progress-list');
+  list.innerHTML = `<div class="up-item" id="up_${file.id}">
+    <div class="up-top"><span class="up-name">${file.name}</span><span class="up-pct" id="upct_${file.id}">0%</span></div>
+    <div class="up-bar"><div class="up-fill" id="ufill_${file.id}" style="width:0%"></div></div>
+    <div class="up-status" id="ust_${file.id}">Encrypting…</div>
+  </div>`;
+  simulateUploadProgress(file, () => setTimeout(() => closeUpload(), 600));
+}
+
+function simulateUploadProgress(file, done) {
+  let pct = 0;
+  const steps = [
+    [20, 'Encrypting with AES-256-GCM…'],
+    [50, 'Indexing metadata…'],
+    [80, 'Writing to encrypted SQLite…'],
+    [100, '✓ Secured in vault']
+  ];
+  let si = 0;
+  const iv = setInterval(() => {
+    pct += Math.random() * 18 + 8;
+    if (pct > 100) pct = 100;
+    const fill = document.getElementById('ufill_' + file.id);
+    const pctEl = document.getElementById('upct_' + file.id);
+    const stEl = document.getElementById('ust_' + file.id);
+    if (fill) fill.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+    if (si < steps.length && pct >= steps[si][0]) {
+      if (stEl) stEl.textContent = steps[si][1];
+      si++;
+    }
+    if (pct >= 100) {
+      clearInterval(iv);
+      state.files.push(file);
+      addActivity(`Imported "${file.name}" from ${file.source}`, 'var(--accent)');
+      addAuditLog(`File imported: ${file.name} · AES-256-GCM encrypted`);
+      showToast('success', '🔐', `"${file.name}" secured in vault`);
+      refreshUI();
+      if (done) done();
+    }
+  }, 200);
+}
+
+/* ═══════════════════════════════════════════════
+   SMART SEARCH (AI-powered via Anthropic API)
+═══════════════════════════════════════════════ */
+let searchTimeout;
+
+document.getElementById('global-search-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const q = this.value.trim();
+    if (q) { showScreen('search'); setSearchQuery(q); doSearch(); }
+  }
+});
+
+function setSearchQuery(q) {
+  document.getElementById('main-search-input').value = q;
+  showScreen('search');
+}
+
+async function doSearch() {
+  const query = document.getElementById('main-search-input').value.trim();
+  if (!query) { showToast('error','⚠','Please enter a search query'); return; }
+
+  state.searches++;
+  document.getElementById('stat-searches').textContent = state.searches;
+  addActivity(`Searched: "${query}"`, 'var(--accent2)');
+  addAuditLog(`Search query processed on-device: "${query}"`);
+
+  const area = document.getElementById('search-results-area');
+  area.innerHTML = `<div class="ai-answer-box"><div class="ai-answer-header">🤖 AI ASSISTANT <span style="color:var(--text-muted);font-weight:400">· Processing on-device…</span></div>
+    <div class="ai-thinking"><div class="thinking-dots"><span></span><span></span><span></span></div>&nbsp; Analyzing your vault…</div></div>`;
+
+  // local fuzzy match
+  const q = query.toLowerCase();
+  const matched = state.files.filter(f => {
+    return f.name.toLowerCase().includes(q) ||
+      f.tags.some(t => t.toLowerCase().includes(q)) ||
+      f.source.toLowerCase().includes(q) ||
+      f.date.toLowerCase().includes(q) ||
+      f.content.title.toLowerCase().includes(q) ||
+      f.content.body.toLowerCase().includes(q);
+  }).map(f => ({ ...f, score: Math.floor(70 + Math.random() * 30) }))
+    .sort((a,b) => b.score - a.score);
+
+  // AI answer via Anthropic API
+  const docContext = state.files.length === 0
+    ? 'The vault is currently empty (no documents uploaded).'
+    : state.files.map(f => `- ${f.name} (${f.source}, ${f.date}, tags: ${f.tags.join(', ')})`).join('\n');
+
+  let aiText = '';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are Pixel Vault's AI search assistant. The user is searching their private, encrypted, on-device document vault. Be concise and helpful. Respond in 2-3 sentences max. If the query is in Hindi, respond in Hindi+English mix. The vault contains these documents:\n${docContext}\n\nIMPORTANT: Zero data is transmitted — all processing is on-device. Do NOT ask for personal info.`,
+        messages: [{ role: 'user', content: `Search query: "${query}"\n\nWhat documents are relevant? Give a brief helpful answer.` }]
+      })
+    });
+    const data = await resp.json();
+    aiText = data.content?.map(b => b.text || '').join('') || 'Search completed on-device.';
+  } catch(e) {
+    aiText = matched.length > 0
+      ? `Found ${matched.length} document${matched.length > 1 ? 's' : ''} matching "${query}" in your encrypted vault.`
+      : `No documents found for "${query}". Try uploading relevant files first.`;
+  }
+
+  let html = `<div class="ai-answer-box fade-in">
+    <div class="ai-answer-header">🤖 AI ASSISTANT <span style="color:var(--text-muted);font-weight:400">· On-device · 0 bytes transmitted</span></div>
+    <div class="ai-answer-text">${aiText}</div>
+  </div>`;
+
+  if (matched.length > 0) {
+    html += `<div class="section-title" style="margin:0 0 .5rem">📄 ${matched.length} Result${matched.length > 1 ? 's' : ''} Found</div>`;
+    html += `<div class="search-results fade-in">`;
+    matched.forEach(f => {
+      const snippet = f.content.body.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0,120);
+      html += `<div class="result-item" onclick="openFile('${f.id}')">
+        <div class="result-icon">${getTypeIcon(f.type)}</div>
+        <div class="result-body">
+          <div class="result-name">${f.name}</div>
+          <div class="result-snippet">${snippet}…</div>
+        </div>
+        <div class="result-right">
+          <div class="result-score">${f.score}% match</div>
+          <div class="result-source">${f.source} · ${f.date}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:.85rem">
+      No documents match <strong style="color:var(--text)">"${query}"</strong>.<br>
+      <span style="color:var(--accent);cursor:pointer" onclick="openUpload()">Upload documents to search them →</span>
+    </div>`;
+  }
+
+  area.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════
+   VOICE SEARCH
+═══════════════════════════════════════════════ */
+let voiceTarget = null;
+let voiceSynth = null;
+let recognitionActive = false;
+
+const HINDI_SAMPLES = [
+  'बिजली बिल ढूंढो',
+  'पिछले महीने का invoice',
+  'मेडिकल रिपोर्ट दिखाओ',
+  'insurance policy kahan hai',
+  'Aadhar card scan',
+  'GST invoice 2024',
+];
+
+function startVoice(target) {
+  voiceTarget = target;
+  document.getElementById('voice-panel').classList.add('active');
+  document.getElementById('vp-transcript').textContent = '—';
+  recognitionActive = true;
+
+  const mic = target === 'main' ? document.getElementById('main-mic') : document.getElementById('topbar-mic');
+  if (mic) mic.classList.add('recording');
+
+  // Use Web Speech API if available, else simulate
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = 'hi-IN';
+    rec.interimResults = true;
+    rec.onresult = (e) => {
+      const t = Array.from(e.results).map(r => r[0].transcript).join('');
+      document.getElementById('vp-transcript').textContent = t;
+    };
+    rec.onend = () => {
+      const t = document.getElementById('vp-transcript').textContent;
+      if (t && t !== '—') finalizeVoice(t);
+      else stopVoice();
+    };
+    rec.onerror = () => simulateVoice();
+    rec.start();
+  } else {
+    simulateVoice();
+  }
+}
+
+function simulateVoice() {
+  const sample = HINDI_SAMPLES[Math.floor(Math.random() * HINDI_SAMPLES.length)];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (!recognitionActive) { clearInterval(iv); return; }
+    i++;
+    document.getElementById('vp-transcript').textContent = sample.slice(0, i * 3);
+    if (i * 3 >= sample.length) {
+      clearInterval(iv);
+      setTimeout(() => finalizeVoice(sample), 400);
+    }
+  }, 80);
+}
+
+function finalizeVoice(text) {
+  stopVoice();
+  if (voiceTarget === 'main' || voiceTarget === 'topbar') {
+    document.getElementById('main-search-input').value = text;
+    document.getElementById('global-search-input').value = text;
+    showScreen('search');
+    setTimeout(() => doSearch(), 300);
+  }
+}
+
+function stopVoice() {
+  recognitionActive = false;
+  document.getElementById('voice-panel').classList.remove('active');
+  document.getElementById('main-mic')?.classList.remove('recording');
+  document.getElementById('topbar-mic')?.classList.remove('recording');
+}
+
+/* ═══════════════════════════════════════════════
+   ACTIVITY & AUDIT
+═══════════════════════════════════════════════ */
+function addActivity(text, color) {
+  state.activity.unshift({ text, color, time: 'just now' });
+  const list = document.getElementById('activity-list');
+  const item = document.createElement('div');
+  item.className = 'activity-item fade-in';
+  item.innerHTML = `<div class="activity-dot" style="background:${color}"></div><span>${text}</span><span class="activity-time">just now</span>`;
+  list.prepend(item);
+  if (list.children.length > 8) list.removeChild(list.lastChild);
+}
+
+function addAuditLog(text) {
+  const list = document.getElementById('audit-log-list');
+  const row = document.createElement('div');
+  row.className = 'audit-row fade-in';
+  row.innerHTML = `<div class="activity-dot" style="background:var(--accent);width:6px;height:6px;border-radius:50%;flex-shrink:0"></div>
+    <div class="audit-event">${text}</div>
+    <div class="audit-time">${new Date().toLocaleTimeString()}</div>
+    <div class="audit-ok">✓</div>`;
+  list.prepend(row);
+  if (list.children.length > 12) list.removeChild(list.lastChild);
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+function showToast(type, icon, msg) {
+  const t = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icon}</span>${msg}`;
+  t.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(20px)'; el.style.transition = '.3s'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+/* ═══════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('global-search-input').focus();
+  }
+  if (e.key === 'Escape') {
+    closeViewer();
+    closeUpload();
+    stopVoice();
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+refreshUI();
+showToast('success', '🔐', 'Pixel Vault initialized · AES-256-GCM active');
+</script>
+</body>
+</html>

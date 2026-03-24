@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Vault — Secure, Search, Speak</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1e2330;
+    --accent: #00e5a0;
+    --accent2: #3b82f6;
+    --accent3: #f59e0b;
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4rem;
+    height: 64px;
+    background: rgba(10,11,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  .btn-nav {
+    background: var(--accent);
+    color: #000;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .btn-nav:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(0,229,160,0.35);
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 80px 4rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 50%, rgba(0,229,160,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(59,130,246,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Grid lines */
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+  }
+
+  .hero-content {
+    max-width: 600px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,229,160,0.1);
+    border: 1px solid rgba(0,229,160,0.25);
+    color: var(--accent);
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.25rem;
+  }
+
+  h1 .accent { color: var(--accent); }
+  h1 .accent2 { color: var(--accent2); }
+
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    font-weight: 400;
+    margin-bottom: 2.5rem;
+    max-width: 480px;
+    line-height: 1.7;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    display: flex; align-items: center; gap: 8px;
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,229,160,0.3);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    padding: 14px 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 400;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* VAULT ILLUSTRATION */
+  .hero-visual {
+    position: absolute;
+    right: 4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 380px;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .vault-mockup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vault-mockup::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
+  }
+
+  .mockup-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mockup-dots { display: flex; gap: 6px; }
+  .mockup-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .mockup-dot:nth-child(1) { background: #ff5f56; }
+  .mockup-dot:nth-child(2) { background: #ffbd2e; }
+  .mockup-dot:nth-child(3) { background: #27c93f; }
+
+  .mockup-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex: 1;
+    text-align: center;
+  }
+
+  .search-bar {
+    background: var(--bg);
+    border: 1px solid rgba(0,229,160,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+    animation: glow 3s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { border-color: rgba(0,229,160,0.3); }
+    50% { border-color: rgba(0,229,160,0.7); box-shadow: 0 0 12px rgba(0,229,160,0.15); }
+  }
+
+  .mic-icon {
+    width: 28px; height: 28px;
+    background: rgba(0,229,160,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+
+  .search-text {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .result-cards { display: flex; flex-direction: column; gap: 8px; }
+
+  .result-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .result-card:hover { border-color: rgba(0,229,160,0.3); }
+
+  .result-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .result-meta { flex: 1; }
+  .result-name { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+  .result-detail { font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); }
+
+  .result-match {
+    font-size: 0.65rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    background: rgba(0,229,160,0.1);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .privacy-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .shield {
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+
+  .privacy-text {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .privacy-text span { color: var(--accent); }
+
+  /* SECTIONS */
+  section {
+    padding: 6rem 4rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  h2 {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+
+  /* PROBLEM SECTION */
+  .problem {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .problem-inner { max-width: 1100px; margin: 0 auto; }
+
+  .problem-header { margin-bottom: 3rem; }
+
+  .problem-desc {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    max-width: 480px;
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .problem-card {
+    background: var(--surface);
+    padding: 2rem 1.75rem;
+    transition: background 0.2s;
+  }
+
+  .problem-card:hover { background: var(--surface2); }
+
+  .prob-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .prob-stat {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent3);
+    margin-bottom: 0.4rem;
+  }
+
+  .prob-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+
+  .prob-detail {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* FEATURES */
+  .features-inner { max-width: 1100px; margin: 0 auto; }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 3rem;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .feature-card:hover { background: var(--surface2); }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--card-accent, var(--accent)), transparent);
+  }
+
+  .feature-card:nth-child(1) { --card-accent: var(--accent); }
+  .feature-card:nth-child(2) { --card-accent: #a78bfa; }
+  .feature-card:nth-child(3) { --card-accent: var(--accent2); }
+  .feature-card:nth-child(4) { --card-accent: var(--accent3); }
+
+  .feat-icon-wrap {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .feat-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: var(--text);
+  }
+
+  .feat-desc {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  .feat-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 1rem;
+  }
+
+  .feat-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  /* DEMO */
+  .demo {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .demo-visual {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .demo-visual::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent2));
+    animation: shimmer 3s linear infinite;
+    background-size: 200% 100%;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .demo-topbar {
+    background: var(--surface);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-dots { display: flex; gap: 5px; }
+  .demo-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .demo-dot:nth-child(1) { background: #ff5f56; }
+  .demo-dot:nth-child(2) { background: #ffbd2e; }
+  .demo-dot:nth-child(3) { background: #27c93f; }
+
+  .demo-app-title {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    flex: 1;
+    text-align: center;
+  }
+
+  .demo-body { padding: 1.25rem; }
+
+  .demo-query-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid rgba(0,229,160,0.4);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 0 20px rgba(0,229,160,0.07);
+  }
+
+  .mic-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(0,229,160,0.15);
+    border: 1px solid rgba(0,229,160,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: var(--accent);
+    animation: micPulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes micPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,160,0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(0,229,160,0); }
+  }
+
+  .demo-query-text {
+    font-family: 'Noto Sans Devanagari', var(--font-display);
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  .demo-results { display: flex; flex-direction: column; gap: 8px; }
+
+  .demo-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    animation: slideIn 0.4s ease both;
+  }
+
+  .demo-result:nth-child(1) { animation-delay: 0.1s; }
+  .demo-result:nth-child(2) { animation-delay: 0.25s; }
+  .demo-result:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .dr-icon {
+    width: 34px; height: 34px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .dr-info { flex: 1; }
+  .dr-name { font-size: 0.8rem; font-weight: 600; }
+  .dr-meta { font-size: 0.68rem; color: var(--text-muted); font-family: var(--font-mono); }
+  .dr-score { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); }
+
+  .demo-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .demo-stat {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .demo-stat strong { color: var(--accent); }
+
+  .demo-content h2 { margin-bottom: 0.75rem; }
+
+  .demo-desc {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .demo-steps { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+
+  .demo-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .step-num {
+    width: 24px; height: 24px;
+    background: rgba(0,229,160,0.12);
+    border: 1px solid rgba(0,229,160,0.25);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-text { font-size: 0.875rem; color: var(--text-dim); line-height: 1.5; }
+  .step-text strong { color: var(--text); font-weight: 600; }
+
+  /* SECURITY */
+  .security-inner { max-width: 1100px; margin: 0 auto; }
+
+  .security-header { margin-bottom: 3rem; }
+
+  .security-header p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    max-width: 440px;
+    margin-top: 0.5rem;
+  }
+
+  .security-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .sec-card {
+    background: var(--surface);
+    padding: 2rem;
+    text-align: center;
+    transition: background 0.2s;
+  }
+
+  .sec-card:hover { background: var(--surface2); }
+
+  .sec-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .sec-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--text);
+  }
+
+  .sec-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .security-strip {
+    background: rgba(0,229,160,0.05);
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: 10px;
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .strip-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* USE CASES */
+  .usecases {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .usecases-inner { max-width: 1100px; margin: 0 auto; }
+
+  .uc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 3rem;
+  }
+
+  .uc-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .uc-card:hover {
+    border-color: rgba(59,130,246,0.4);
+    transform: translateY(-3px);
+  }
+
+  .uc-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .uc-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .uc-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 3rem 4rem;
+    border-top: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-brand .logo { font-size: 1.1rem; margin-bottom: 0.75rem; display: flex; }
+
+  .footer-tagline {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    max-width: 260px;
+    line-height: 1.6;
+  }
+
+  .footer-links { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .footer-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--accent); }
+
+  .social-icons { display: flex; gap: 12px; }
+
+  .social-icon {
+    width: 36px; height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+
+  .social-icon:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .footer-bottom {
+    max-width: 1100px;
+    margin: 2rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-credit {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  .footer-credit span { color: var(--accent); }
+
+  .footer-notice {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* DIVIDERS */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  @media (max-width: 1024px) {
+    nav { padding: 0 2rem; }
+    section { padding: 4rem 2rem; }
+    footer { padding: 2.5rem 2rem; }
+    .hero { padding: 80px 2rem 4rem; }
+    .hero-visual { display: none; }
+    .problem-grid { grid-template-columns: repeat(2, 1fr); }
+    .features-grid { grid-template-columns: 1fr; }
+    .demo-inner { grid-template-columns: 1fr; }
+    .security-grid { grid-template-columns: 1fr; }
+    .uc-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">🔐</div>
+    Pixel Vault
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#security">Security</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#demo" class="btn-nav">↗ Try Demo</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">B.Tech CSE · Proof of Concept</div>
+    <h1>
+      Secure, Search<br>
+      and <span class="accent">Speak</span> —<br>
+      <span class="accent2">Your Documents,<br>Your Privacy.</span>
+    </h1>
+    <p class="hero-sub">On-device multilingual document search with zero data transmission. Works offline. Supports Hindi. Runs on budget Android phones.</p>
+    <div class="hero-ctas">
+      <a href="#demo" class="btn-primary">▶ Try Prototype</a>
+      <a href="#features" class="btn-ghost">Learn More</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="vault-mockup">
+      <div class="mockup-header">
+        <div class="mockup-dots">
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+        </div>
+        <div class="mockup-title">Pixel Vault — Search</div>
+      </div>
+      <div class="search-bar">
+        <div class="mic-icon">🎙</div>
+        <div class="search-text">बिजली बिल ढूंढो last month का</div>
+      </div>
+      <div class="result-cards">
+        <div class="result-card">
+          <div class="result-icon" style="background: rgba(245,158,11,0.12);">📄</div>
+          <div class="result-meta">
+            <div class="result-name">Electricity_Bill_Oct.pdf</div>
+            <div class="result-detail">WhatsApp · 2.1MB · Oct 2024</div>
+          </div>
+          <div class="result-match">98%</div>
+        </div>
+        <div class="result-card">
+          <div class="result-icon" style="background: rgba(59,130,246,0.12);">📧</div>
+          <div class="result-meta">
+            <div class="result-name">BSES_bill_Nov.pdf</div>
+            <div class="result-detail">Gmail · 1.8MB · Nov 2024</div>
+          </div>
+          <div class="result-match">91%</div>
+        </div>
+        <div class="result-card">
+          <div class="result-icon" style="background: rgba(0,229,160,0.12);">☁️</div>
+          <div class="result-meta">
+            <div class="result-name">Power_Invoice_Sep.pdf</div>
+            <div class="result-detail">Google Drive · 3.4MB · Sep 2024</div>
+          </div>
+          <div class="result-match">87%</div>
+        </div>
+      </div>
+      <div class="privacy-badge">
+        <div class="shield">🛡</div>
+        <div class="privacy-text"><span>0 bytes</span> transmitted · AES-256-GCM encrypted</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="problem-inner">
+    <div class="problem-header">
+      <div class="section-tag">// the problem</div>
+      <h2>The Problem We Solve</h2>
+      <p class="problem-desc">Document chaos is costing Indians time, privacy, and peace of mind every single day.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <span class="prob-icon">⏱</span>
+        <div class="prob-stat">20 min</div>
+        <div class="prob-label">Per Document Retrieval</div>
+        <div class="prob-detail">Average time lost searching across scattered apps and folders for a single document.</div>
+      </div>
+      <div class="problem-card">
+        <span class="prob-icon">📂</span>
+        <div class="prob-stat">5+ apps</div>
+        <div class="prob-label">Fragmented Storage</div>
+        <div class="prob-detail">Documents spread across WhatsApp, Gmail, Drive, and local storage — no unified view.</div>
+      </div>
+      <div class="problem-card">
+        <span class="prob-icon">🎙</span>
+        <div class="prob-stat">0</div>
+        <div class="prob-label">Hindi Voice Support</div>
+        <div class="prob-detail">Existing tools offer no offline Hindi STT, locking out hundreds of millions of users.</div>
+      </div>
+      <div class="problem-card">
+        <span class="prob-icon">🔒</span>
+        <div class="prob-stat">High</div>
+        <div class="prob-label">Privacy Risks</div>
+        <div class="prob-detail">Cloud-based search tools transmit sensitive documents to external servers without consent.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-inner">
+    <div class="section-tag">// features</div>
+    <h2>Built Different, By Design</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feat-icon-wrap">📥</div>
+        <div class="feat-title">Import & Unified Search</div>
+        <div class="feat-desc">Seamlessly connect WhatsApp, Gmail, Google Drive, and local storage. One search bar to rule them all — no more app-hopping.</div>
+        <div class="feat-tags">
+          <span class="feat-tag">WhatsApp</span>
+          <span class="feat-tag">Gmail</span>
+          <span class="feat-tag">Drive</span>
+          <span class="feat-tag">Local Files</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon-wrap">🎙</div>
+        <div class="feat-title">Hindi Voice Search</div>
+        <div class="feat-desc">Offline speech-to-text with fast intent parsing. Search in natural Hindi — "bijli bill dhundo" — and get results instantly without internet.</div>
+        <div class="feat-tags">
+          <span class="feat-tag">Offline STT</span>
+          <span class="feat-tag">Hindi NLP</span>
+          <span class="feat-tag">Zero latency</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon-wrap">🛡</div>
+        <div class="feat-title">Privacy-First Architecture</div>
+        <div class="feat-desc">AES-256-GCM encryption on all stored files. Zero bytes of document data transmitted. Firebase handles auth only — your files never leave your device.</div>
+        <div class="feat-tags">
+          <span class="feat-tag">AES-256-GCM</span>
+          <span class="feat-tag">On-device</span>
+          <span class="feat-tag">Encrypted SQLite</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon-wrap">📱</div>
+        <div class="feat-title">Affordable & Accessible</div>
+        <div class="feat-desc">Designed to run smoothly on budget Android phones under ₹15,000. No premium hardware required — privacy and power for everyone.</div>
+        <div class="feat-tags">
+          <span class="feat-tag">Sub-₹15K devices</span>
+          <span class="feat-tag">Android</span>
+          <span class="feat-tag">Low RAM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo" id="demo">
+  <div class="demo-inner">
+    <div class="demo-visual">
+      <div class="demo-topbar">
+        <div class="demo-dots">
+          <div class="demo-dot"></div>
+          <div class="demo-dot"></div>
+          <div class="demo-dot"></div>
+        </div>
+        <div class="demo-app-title">Pixel Vault — Live Demo</div>
+      </div>
+      <div class="demo-body">
+        <div class="demo-query-wrap">
+          <div class="mic-btn">🎙</div>
+          <div class="demo-query-text">बिजली बिल ढूंढो last month का</div>
+        </div>
+        <div class="demo-results">
+          <div class="demo-result">
+            <div class="dr-icon" style="background: rgba(245,158,11,0.12);">📄</div>
+            <div class="dr-info">
+              <div class="dr-name">Electricity_Bill_Oct.pdf</div>
+              <div class="dr-meta">WhatsApp · Oct 14, 2024 · 2.1MB</div>
+            </div>
+            <div class="dr-score">98%</div>
+          </div>
+          <div class="demo-result">
+            <div class="dr-icon" style="background: rgba(59,130,246,0.12);">📧</div>
+            <div class="dr-info">
+              <div class="dr-name">BSES_Invoice_Nov.pdf</div>
+              <div class="dr-meta">Gmail · Nov 3, 2024 · 1.8MB</div>
+            </div>
+            <div class="dr-score">91%</div>
+          </div>
+          <div class="demo-result">
+            <div class="dr-icon" style="background: rgba(0,229,160,0.12);">☁️</div>
+            <div class="dr-info">
+              <div class="dr-name">Power_Invoice_Sep.pdf</div>
+              <div class="dr-meta">Google Drive · Sep 28, 2024 · 3.4MB</div>
+            </div>
+            <div class="dr-score">87%</div>
+          </div>
+        </div>
+        <div class="demo-footer">
+          <span class="demo-stat">⚡ <strong>0.3s</strong> search time</span>
+          <span class="demo-stat" style="margin-left: auto">🛡 <strong>0 bytes</strong> transmitted</span>
+        </div>
+      </div>
+    </div>
+    <div class="demo-content">
+      <div class="section-tag">// demo</div>
+      <h2>Fast, Private, Multilingual Search in Action</h2>
+      <p class="demo-desc">Watch Pixel Vault retrieve your electricity bills with a single Hindi voice command — instantly, privately, entirely on your device.</p>
+      <ul class="demo-steps">
+        <li class="demo-step">
+          <span class="step-num">01</span>
+          <span class="step-text"><strong>Speak your query</strong> in Hindi or English — tap the mic and say what you need.</span>
+        </li>
+        <li class="demo-step">
+          <span class="step-num">02</span>
+          <span class="step-text"><strong>Offline STT</strong> processes audio on-device. No internet required. No data transmitted.</span>
+        </li>
+        <li class="demo-step">
+          <span class="step-num">03</span>
+          <span class="step-text"><strong>Results surface</strong> from across all connected sources, ranked by relevance score.</span>
+        </li>
+        <li class="demo-step">
+          <span class="step-num">04</span>
+          <span class="step-text"><strong>Open, share, or organize</strong> documents — your encrypted vault, always in your control.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section id="security">
+  <div class="security-inner">
+    <div class="security-header">
+      <div class="section-tag">// security</div>
+      <h2>Your Data Stays With You</h2>
+      <p>Zero-trust architecture, military-grade encryption, and a strict no-upload policy for your documents.</p>
+    </div>
+    <div class="security-grid">
+      <div class="sec-card">
+        <span class="sec-icon">🔐</span>
+        <div class="sec-title">AES-256-GCM Encryption</div>
+        <div class="sec-text">Every document stored in an encrypted SQLite database using military-grade symmetric encryption.</div>
+      </div>
+      <div class="sec-card">
+        <span class="sec-icon">🚫</span>
+        <div class="sec-title">Zero Cloud Upload</div>
+        <div class="sec-text">Document content never leaves your device. File data is never transmitted to any server, ever.</div>
+      </div>
+      <div class="sec-card">
+        <span class="sec-icon">🔥</span>
+        <div class="sec-title">Firebase Auth Only</div>
+        <div class="sec-text">Firebase handles identity — nothing else. Login credentials only. No document metadata transmitted.</div>
+      </div>
+    </div>
+    <div class="security-strip">
+      <div class="strip-item"><span class="strip-dot"></span> Encrypted SQLite on-device database</div>
+      <div class="strip-item"><span class="strip-dot"></span> Temporary cloud file handling with auto-deletion</div>
+      <div class="strip-item"><span class="strip-dot"></span> Zero search queries transmitted</div>
+      <div class="strip-item"><span class="strip-dot"></span> Offline-first architecture</div>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section class="usecases" id="market">
+  <div class="usecases-inner">
+    <div class="section-tag">// use cases</div>
+    <h2>Who It's Built For</h2>
+    <div class="uc-grid">
+      <div class="uc-card">
+        <span class="uc-icon">🏠</span>
+        <div class="uc-title">Urban Families</div>
+        <div class="uc-desc">Manage utility bills, insurance, property documents, and school records — all in one place.</div>
+      </div>
+      <div class="uc-card">
+        <span class="uc-icon">🏪</span>
+        <div class="uc-title">Small Businesses</div>
+        <div class="uc-desc">Quickly retrieve invoices, GST bills, vendor contracts, and compliance documents on the go.</div>
+      </div>
+      <div class="uc-card">
+        <span class="uc-icon">🏥</span>
+        <div class="uc-title">Clinics & Professionals</div>
+        <div class="uc-desc">Securely store and search patient records, prescriptions, and lab reports with full privacy.</div>
+      </div>
+      <div class="uc-card">
+        <span class="uc-icon">🎓</span>
+        <div class="uc-title">Students</div>
+        <div class="uc-desc">Organize academic files, admit cards, mark sheets, and scholarships across all platforms.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#" class="logo">
+        <div class="logo-icon">🔐</div>
+        Pixel Vault
+      </a>
+      <p class="footer-tagline">Secure, on-device document search with multilingual voice support for India.</p>
+    </div>
+    <div>
+      <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color: var(--text-muted); margin-bottom: 0.75rem; font-family: var(--font-mono);">Links</div>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">References</a>
+        <a href="#">Contact Us</a>
+        <a href="#">Documentation</a>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color: var(--text-muted); margin-bottom: 0.75rem; font-family: var(--font-mono);">Follow</div>
+      <div class="social-icons">
+        <a class="social-icon" href="#" title="GitHub">𝔾</a>
+        <a class="social-icon" href="#" title="LinkedIn">in</a>
+        <a class="social-icon" href="#" title="Twitter">𝕏</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-credit">
+      Developed by <span>Mayank</span> · B.Tech CSE · Proof-of-Concept Project
+    </div>
+    <div class="footer-notice">
+      <span style="color: var(--accent)">🛡</span> 0 bytes of your data ever transmitted
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Smooth scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // Intersection observer for fade-in
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.problem-card, .feature-card, .sec-card, .uc-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
